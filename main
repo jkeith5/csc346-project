@@ -9,20 +9,35 @@ public class Main {
 
     public static void main(String[] args) {
         String websiteDnD = "https://aps2.missouriwestern.edu/schedule/Default.asp?tck=201910";//disciplines and depts
-        ArrayList<String> disciplines = new ArrayList<>();
-        ArrayList<String> depts= new ArrayList<>();
+        ArrayList<String> disciplinesAbbrev = new ArrayList<>();
+        ArrayList<String> disciplinesFull= new ArrayList<>();
+        ArrayList<String> deptsAbbrev = new ArrayList<>();
+        ArrayList<String> deptsFull= new ArrayList<>();
         try {
-            Document docDnD= Jsoup.connect(websiteDnD).get();
-            Elements options=docDnD.select("#scheduleform option");//finds the form with id=scheduleform and pulls all option tags from it
-            for (Element option : options){
+            Document docDisc= Jsoup.connect(websiteDnD).get();
+            Elements discOptions=docDisc.select("#subject option");//finds the label with id=subject and pulls all option tags from it
+            System.out.println("-------");
+            for (Element option : discOptions){
                 System.out.println(option);//prints all options including all the html info
-                disciplines.add(option.val());//adds the subject to arraylist
-                depts.add(option.text());//adds the fullname to arraylist
+                disciplinesAbbrev.add(option.val());//adds the subject to arraylist
+                disciplinesFull.add(option.text());//adds the fullname to arraylist
 
             }
-            disciplines.remove(0);
-            depts.remove(0);
-            System.out.println(disciplines.get(0)+", "+depts.get(1));
+            disciplinesAbbrev.remove(0);//removes the first entry which is a title of sorts.
+            disciplinesFull.remove(0);//see above comment
+            System.out.println(disciplinesAbbrev.get(0)+", "+disciplinesFull.get(1));
+            Elements deptsOptions=docDisc.select("#department option");
+            System.out.println("----");
+            for (Element option: deptsOptions){
+                System.out.println(option);
+                deptsAbbrev.add(option.val());
+                deptsFull.add(option.text());
+            }
+            deptsAbbrev.remove(0);
+            deptsFull.remove(0);
+            System.out.println(deptsAbbrev.get(0)+", "+deptsFull.get(1));
+
+
 
 
         } catch (IOException e) {

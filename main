@@ -1,0 +1,32 @@
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import java.io.IOException;
+import java.util.ArrayList;
+
+public class Main {
+
+    public static void main(String[] args) {
+        String websiteDnD = "https://aps2.missouriwestern.edu/schedule/Default.asp?tck=201910";//disciplines and depts
+        ArrayList<String> disciplines = new ArrayList<>();
+        ArrayList<String> depts= new ArrayList<>();
+        try {
+            Document docDnD= Jsoup.connect(websiteDnD).get();
+            Elements options=docDnD.select("#scheduleform option");//finds the form with id=scheduleform and pulls all option tags from it
+            for (Element option : options){
+                System.out.println(option);//prints all options including all the html info
+                disciplines.add(option.val());//adds the subject to arraylist
+                depts.add(option.text());//adds the fullname to arraylist
+
+            }
+            disciplines.remove(0);
+            depts.remove(0);
+            System.out.println(disciplines.get(0)+", "+depts.get(1));
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}

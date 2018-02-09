@@ -1,0 +1,44 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
+public class Sqlite {
+    static Connection conn;
+
+    public boolean makeConnection(String fileName){//this connects to the database
+        boolean successfulOpen= false;
+        String connectString= "jdbc:sqlite:"+fileName;
+        try {
+            conn = DriverManager.getConnection(connectString);
+            if (conn!=null){
+                successfulOpen=true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return successfulOpen;
+    }
+    static void close(){//closes database
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    void insert(String tableName, String abbrev, String fullName){//inserts data into table tableName
+        String query="INSERT INTO "+tableName+"(abbreviation,fullName) VALUES(?,?)";
+        try { PreparedStatement pstmst= conn.prepareStatement(query);{
+                pstmst.setString(1,abbrev);
+                pstmst.setString(2,fullName);
+                pstmst.executeUpdate();
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
+
+    }
+}

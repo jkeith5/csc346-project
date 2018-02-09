@@ -13,35 +13,49 @@ public class Main {
         ArrayList<String> disciplinesFull= new ArrayList<>();
         ArrayList<String> deptsAbbrev = new ArrayList<>();
         ArrayList<String> deptsFull= new ArrayList<>();
+        Sqlite db=new Sqlite();
+
         try {
             Document docDisc= Jsoup.connect(websiteDnD).get();
             Elements discOptions=docDisc.select("#subject option");//finds the label with id=subject and pulls all option tags from it
             System.out.println("-------");
             for (Element option : discOptions){
                 System.out.println(option);//prints all options including all the html info
-                disciplinesAbbrev.add(option.val());//adds the subject to arraylist
-                disciplinesFull.add(option.text());//adds the fullname to arraylist
+                addToArraylist(disciplinesAbbrev,disciplinesFull,option.val(),option.text());
 
             }
             disciplinesAbbrev.remove(0);//removes the first entry which is a title of sorts.
             disciplinesFull.remove(0);//see above comment
             System.out.println(disciplinesAbbrev.get(0)+", "+disciplinesFull.get(1));
-            Elements deptsOptions=docDisc.select("#department option");
+            Elements deptsOptions=docDisc.select("#department option");//finds the label with id=department and pulls option tags
             System.out.println("----");
             for (Element option: deptsOptions){
                 System.out.println(option);
-                deptsAbbrev.add(option.val());
-                deptsFull.add(option.text());
+                addToArraylist(deptsAbbrev,deptsFull,option.val(),option.text());
             }
-            deptsAbbrev.remove(0);
-            deptsFull.remove(0);
+            deptsAbbrev.remove(0);//removes the title
+            deptsFull.remove(0);//removes the title
             System.out.println(deptsAbbrev.get(0)+", "+deptsFull.get(1));
-
-
-
-
         } catch (IOException e) {
-            e.printStackTrace();
+            ///e.printStackTrace();
+            System.err.println("Error: "+e.getMessage());
+        }
+        if (db.makeConnection("scraping.db")){
+            System.out.println("Database opened!");
+            addToDatabase(disciplinesAbbrev,disciplinesFull,"subjects",db);
+            addToDatabase(deptsAbbrev,deptsFull,"departments",db);
+        }else{
+            System.out.println("Database failed to open!");
         }
     }
+    public static void addToDatabase(ArrayList<String> abbrev,ArrayList<String> fullName,String tableName, Sqlite db){
+        for (int i=0;i<abbrev.size();i++) {
+            db.insert(tableName, abbrev.get(i), fullName.get(i));
+        }
+    }
+    public static void addToArraylist(ArrayList<String> addVal,ArrayList<String> addFull, String val, String full){//adds scraped data into arraylists
+        addVal.add(val);
+        addFull.add(full);
+    }
+
 }

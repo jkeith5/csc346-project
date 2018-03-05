@@ -2,53 +2,116 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import javax.print.Doc;
 import java.io.IOException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
+        Scanner scan= new Scanner(System.in);
         String websiteDnD = "https://aps2.missouriwestern.edu/schedule/Default.asp?tck=201910";//disciplines and depts
         ArrayList<String> disciplinesAbbrev = new ArrayList<>();
         ArrayList<String> disciplinesFull= new ArrayList<>();
         ArrayList<String> deptsAbbrev = new ArrayList<>();
         ArrayList<String> deptsFull= new ArrayList<>();
         Sqlite db=new Sqlite();
-
-        try {
+        db.makeConnection("scraping.db");
+        try{
             Document docDisc= Jsoup.connect(websiteDnD).get();
+            if (db.makeConnection("scraping.db")){//if connected add data to database.
+                System.out.println("Database opened!");
+                addToDatabase(deptsAbbrev,deptsFull,"departments",db);
+                System.out.println("Data inserted into departments table");
+                //db.printTable("subjects","abbreviation", "fullName");
+            }else{
+                System.out.println("Database failed to open!");
+            }
+            char letter='n';
+            while (letter!='Q'){//while letter doesnt equal Q it continues the loop
+                printMenu();
+                String command=scan.next();
+                letter=executeCommand(command,db,docDisc,disciplinesAbbrev,disciplinesFull,deptsAbbrev,deptsFull);
+            }
+
+
+
+
+            } catch (IOException e) {
+            ///e.printStackTrace();
+            System.err.println("Error: "+e.getMessage());
+            }
+
+    }
+    public static void printMenu(){
+        System.out.println("A= Erase and Build Subjects table, B=Erase and Build Department Table, C=prints subject table, D= prints department table\n" +
+                "E=Prints Report of disciplines by department, G=Erase and build sections data, H=prints a listing of sections, I(i)= Prints faculty and their schedules by department,\n" +
+                "J= Print control-break section report for a department, K= Produces control-break, Q=quit program");
+        System.out.println("Enter a command: ");
+    }
+
+    public static char executeCommand(String command, Sqlite db, Document docDisc,ArrayList<String> disciplinesAbbrev,ArrayList<String>disciplinesFull,ArrayList<String> deptsAbbrev, ArrayList<String> deptsFull){
+        String cmd="";
+        char returned='j';
+        cmd = command.toUpperCase();
+        if (cmd.equals("A")){
+            db.deleteTable("subjects");
+            db.createTable("subjects", "abbreviation", "fullName");
             Elements discOptions=docDisc.select("#subject option");//finds the label with id=subject and pulls all option tags from it
             System.out.println("-------");
             for (Element option : discOptions){
-                System.out.println(option);//prints all options including all the html info
                 addToArraylist(disciplinesAbbrev,disciplinesFull,option.val(),option.text());
 
             }
             disciplinesAbbrev.remove(0);//removes the first entry which is a title of sorts.
             disciplinesFull.remove(0);//see above comment
-            System.out.println(disciplinesAbbrev.get(0)+", "+disciplinesFull.get(1));
+            if (db.makeConnection("scraping.db")) {//if connected add data to database.
+                System.out.println("Database opened!");
+                addToDatabase(disciplinesAbbrev, disciplinesFull, "subjects", db);
+                System.out.println("Data inserted into subjects table");
+            }else{
+                System.out.println("Database failed to open!");
+            }
+            returned='A';
+        }else if (cmd.equals("Q")){
+            System.out.println("Closing.");
+            System.exit(10);
+            returned='Q';
+        }else if (cmd.equals("B")){
+            db.deleteTable("departments");
+            db.createTable("departments", "abbreviation","fullName");
             Elements deptsOptions=docDisc.select("#department option");//finds the label with id=department and pulls option tags
             System.out.println("----");
             for (Element option: deptsOptions){
-                System.out.println(option);
                 addToArraylist(deptsAbbrev,deptsFull,option.val(),option.text());
             }
             deptsAbbrev.remove(0);//removes the title
             deptsFull.remove(0);//removes the title
-            System.out.println(deptsAbbrev.get(0)+", "+deptsFull.get(1));
-        } catch (IOException e) {
-            ///e.printStackTrace();
-            System.err.println("Error: "+e.getMessage());
+            if (db.makeConnection("scraping.db")) {//if connected add data to database.
+                addToDatabase(deptsAbbrev, deptsFull, "departments", db);
+                System.out.println("Data inserted into departments table");
+            }else {
+                System.out.println("Database failed to open!");
+            }
+            returned='B';
+        }else if (cmd.equals("C")){//prints the table subjects
+            db.printTable("subjects","abbreviation","fullName");
+            returned='C';
+        }else if (cmd.equals("D")){//prints the table departments
+            db.printTable("departments", "abbreviation","fullName");
+            returned='D';
+        }else if (cmd.equals("E")){//prints a report of discplines(subjects) by department
+            
         }
-        if (db.makeConnection("scraping.db")){
-            System.out.println("Database opened!");
-            addToDatabase(disciplinesAbbrev,disciplinesFull,"subjects",db);
-            addToDatabase(deptsAbbrev,deptsFull,"departments",db);
-        }else{
-            System.out.println("Database failed to open!");
-        }
+        return returned;
     }
-    public static void addToDatabase(ArrayList<String> abbrev,ArrayList<String> fullName,String tableName, Sqlite db){
+
+
+
+    public static void addToDatabase(ArrayList<String> abbrev,ArrayList<String> fullName,String tableName, Sqlite db){//adds data to opened database
         for (int i=0;i<abbrev.size();i++) {
             db.insert(tableName, abbrev.get(i), fullName.get(i));
         }
@@ -57,5 +120,6 @@ public class Main {
         addVal.add(val);
         addFull.add(full);
     }
+
 
 }

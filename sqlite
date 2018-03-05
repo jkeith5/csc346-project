@@ -1,10 +1,10 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
 
 public class Sqlite {
     static Connection conn;
+    ArrayList<String> data1= new ArrayList<>();
+    ArrayList<String> data2= new ArrayList<>();
 
     public boolean makeConnection(String fileName){//this connects to the database
         boolean successfulOpen= false;
@@ -28,17 +28,57 @@ public class Sqlite {
     }
     void insert(String tableName, String abbrev, String fullName){//inserts data into table tableName
         String query="INSERT INTO "+tableName+"(abbreviation,fullName) VALUES(?,?)";
-        try { PreparedStatement pstmst= conn.prepareStatement(query);{
+        try { PreparedStatement pstmst= conn.prepareStatement(query);
                 pstmst.setString(1,abbrev);
                 pstmst.setString(2,fullName);
                 pstmst.executeUpdate();
 
-            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        }
 
+        void deleteTable(String tableName){//deletes a table in scraping.db with name tableName
+        String query="DROP TABLE "+tableName;
+            try {
+                Statement stmt = conn.createStatement();
+                stmt.executeUpdate(query);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        void createTable(String tableName, String column1Name, String column2Name){
+        String query= "create table if not exists "+tableName+"("+column1Name+", "+column2Name+")";
+            try {
+                Statement stmt= conn.createStatement();
+                stmt.executeUpdate(query);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
 
-
-    }
+        }
+        void selectFromTable(String tableName, String column1, String column2){
+            String query= "SELECT "+column1+", "+column2+" FROM "+ tableName;
+            try{
+                Statement stmt= conn.createStatement();
+                ResultSet rs = stmt.executeQuery(query);
+                while (rs.next()){
+                    String insertedDataC1=rs.getString(column1);
+                    String insertedDataC2=rs.getString(column2);
+                    data1.add(insertedDataC1);
+                    data2.add(insertedDataC2);
+                }
+            }catch (SQLException e){
+                e.printStackTrace();
+            }
+        }
+        void printTable(String tableName, String column1, String column2){
+            selectFromTable(tableName,column1,column2);
+            System.out.println("Data for "+tableName);
+            System.out.printf("| %-4s ||%-30s |\n",column1,column2);
+            for (int i=0;i<data1.size();i++){
+                System.out.printf("| %4s || %-30s |\n",data1.get(i),data2.get(i));
+            }
+        }
 }
